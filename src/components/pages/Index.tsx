@@ -13,6 +13,7 @@ import {
   X,
   Command,
   Sparkles,
+  FolderOpen,
 } from "lucide-react";
 import { loadCatalog } from "@/lib/catalog";
 import { STARTER_CATALOG, type ServiceItem } from "@/data/catalog";
@@ -143,6 +144,20 @@ export default function Index() {
           >
             {lang === "ar" ? "EN" : "ع"}
           </button>
+          <Link
+            to="/files"
+            className="hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/20 hover:brightness-110 transition-all active:scale-95 shrink-0"
+          >
+            <FolderOpen className="w-4 h-4" />
+            {isArabic ? "معرض الملفات" : "Files"}
+          </Link>
+          <Link
+            to="/files"
+            aria-label={isArabic ? "معرض الملفات" : "Files"}
+            className="sm:hidden grid place-items-center w-10 h-10 rounded-xl bg-primary text-primary-foreground shrink-0"
+          >
+            <FolderOpen className="w-4 h-4" />
+          </Link>
           <Link
             to="/settings"
             aria-label={t.settings}

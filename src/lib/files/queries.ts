@@ -93,9 +93,10 @@ const DOC_SELECT =
   "*, project:projects(id, name, code), document_versions(id, version_number, revision_label, file_name, mime_type, size_bytes, storage_path, created_at)";
 
 function withLatest<T extends { document_versions: { version_number: number }[] | null }>(rows: T[]) {
+  type V = NonNullable<T["document_versions"]>[number];
   return rows.map((d) => {
-    const versions = [...(d.document_versions ?? [])].sort((a, b) => b.version_number - a.version_number);
-    return { ...d, latest: versions[0] ?? null, versionCount: versions.length };
+    const versions = [...((d.document_versions ?? []) as V[])].sort((a, b) => b.version_number - a.version_number);
+    return { ...d, latest: (versions[0] ?? null) as V | null, versionCount: versions.length };
   });
 }
 

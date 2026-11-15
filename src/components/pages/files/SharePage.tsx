@@ -1,5 +1,7 @@
 import { Download, FolderOpen, Link2Off, Clock } from "lucide-react";
-import { Route } from "@/routes/share.$token";
+import { getRouteApi } from "@tanstack/react-router";
+
+const Route = getRouteApi("/share/$token");
 import { useLang, useTx } from "@/lib/i18n";
 import { DOC_TYPES, formatBytes, formatDateTime, labelOf } from "@/lib/files/constants";
 import FilePreview from "@/components/files/FilePreview";

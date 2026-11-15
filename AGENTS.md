@@ -33,4 +33,7 @@ use the editor.
 
 - Page components live in `src/components/pages/`; each file in `src/routes/` only wires a path, `head()` metadata and the page component. Why: keeps the ported gateway pages intact and routes thin.
 - Anything read from browser storage (service directory, language choice) is loaded in `useEffect` after mount, starting from the default (starter directory, Arabic). Why: server render and first browser render must match.
-- The service directory is stored in the visitor's browser, not a database, and the gateway has no sign-in. Why: documented product decision in `docs/alazab-cloud.md`; each linked system handles its own sign-in.
+- The service directory is stored in the visitor's browser, not a database; gateway pages (`/`, `/settings`, `/storage`) need no sign-in. Why: documented product decision in `docs/alazab-cloud.md`; each linked system handles its own sign-in.
+- The file gallery lives under `src/routes/_authenticated/files*` (client-only gate, redirect to `/auth`); its data access is enforced by database access rules and storage policies, never by hiding UI. Why: staff and clients share one gallery and clients must only reach released files of their own projects.
+- Gallery revisions are immutable rows plus files at `{project_id}/{document_id}/{uuid}-{name}` in the private `project-files` bucket; status, numbering and the audit log are maintained by database triggers. Why: the plan requires originals never be replaced and every action logged.
+- External share links resolve only through the public `resolveShare` server function, which checks expiry/revocation and returns short-lived signed URLs. Why: the share page has no session, so the check must happen server-side.

@@ -3,7 +3,9 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { FolderOpen, Loader2, MailCheck, ArrowRight, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Route } from "@/routes/auth";
+import { getRouteApi } from "@tanstack/react-router";
+
+const Route = getRouteApi("/auth");
 import { useLang, useTx } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Field, inputCls } from "@/components/files/ui";

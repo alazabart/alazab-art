@@ -22,3 +22,23 @@ describe("Alazab Cloud routes", () => {
     expect(router.matchRoutes(path).at(-1)?.routeId).toBe(path);
   });
 });
+
+describe("File gallery routes", () => {
+  it.each([
+    ["/auth", "/auth"],
+    ["/reset-password", "/reset-password"],
+    ["/files", "/_authenticated/files/"],
+    ["/files/projects", "/_authenticated/files/projects/"],
+    ["/files/projects/abc", "/_authenticated/files/projects/$projectId"],
+    ["/files/gallery", "/_authenticated/files/gallery"],
+    ["/files/documents/abc", "/_authenticated/files/documents/$documentId"],
+    ["/files/approvals", "/_authenticated/files/approvals"],
+    ["/files/shares", "/_authenticated/files/shares"],
+    ["/files/archive", "/_authenticated/files/archive"],
+    ["/files/users", "/_authenticated/files/users"],
+    ["/share/abc", "/share/$token"],
+  ])("matches a page for %s", (path, routeId) => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+    expect(router.matchRoutes(path).at(-1)?.routeId).toBe(routeId);
+  });
+});

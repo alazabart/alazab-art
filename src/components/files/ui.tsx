@@ -54,7 +54,7 @@ export function KindIcon({ fileName, className }: { fileName: string | null | un
   return <FileIcon className={cls} />;
 }
 
-export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
+export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string | undefined; actions?: ReactNode }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
       <div>
@@ -66,7 +66,7 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
   );
 }
 
-export function EmptyState({ icon, title, body, action }: { icon: ReactNode; title: string; body?: string; action?: ReactNode }) {
+export function EmptyState({ icon, title, body, action }: { icon: ReactNode; title: string; body?: string | undefined; action?: ReactNode }) {
   return (
     <div className="text-center py-16 px-6 border border-dashed border-border rounded-2xl bg-card/30">
       <div className="mx-auto w-12 h-12 grid place-items-center rounded-xl bg-secondary text-primary">{icon}</div>
@@ -77,7 +77,7 @@ export function EmptyState({ icon, title, body, action }: { icon: ReactNode; tit
   );
 }
 
-export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
+export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string | undefined }) {
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
