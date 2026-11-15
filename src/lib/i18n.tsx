@@ -166,3 +166,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 export function useLang() {
   return useContext(LangContext);
 }
+
+/** Inline bilingual text: tx("عربي", "English"). Used by the file gallery screens. */
+export function useTx() {
+  const { lang } = useContext(LangContext);
+  return (arText: string, enText: string) => (lang === "ar" ? arText : enText);
+}
