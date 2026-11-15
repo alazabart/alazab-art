@@ -28,3 +28,9 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+
+- Page components live in `src/components/pages/`; each file in `src/routes/` only wires a path, `head()` metadata and the page component. Why: keeps the ported gateway pages intact and routes thin.
+- Anything read from browser storage (service directory, language choice) is loaded in `useEffect` after mount, starting from the default (starter directory, Arabic). Why: server render and first browser render must match.
+- The service directory is stored in the visitor's browser, not a database, and the gateway has no sign-in. Why: documented product decision in `docs/alazab-cloud.md`; each linked system handles its own sign-in.
