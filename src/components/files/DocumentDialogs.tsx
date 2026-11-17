@@ -21,6 +21,7 @@ import {
 import { projectQuery } from "@/lib/files/queries";
 import { uploadVersion } from "@/lib/files/upload";
 import { Field, inputCls, selectCls, textareaCls } from "./ui";
+import { AiSuggest } from "./AiSuggest";
 
 type OpenProps = { open: boolean; onOpenChange: (v: boolean) => void };
 
@@ -359,6 +360,7 @@ export function ShareDialog({ open, onOpenChange, documentId, versionId, project
 /* ---------- Edit details ---------- */
 type DocEditable = {
   id: string;
+  project_id?: string;
   title: string;
   doc_number: string | null;
   doc_type: string;
@@ -410,7 +412,7 @@ export function EditDocumentDialog({ open, onOpenChange, doc }: OpenProps & { do
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{tx("بيانات المستند", "Document details")}</DialogTitle>
         </DialogHeader>
@@ -464,6 +466,21 @@ export function EditDocumentDialog({ open, onOpenChange, doc }: OpenProps & { do
             <Field label={tx("الوصف", "Description")}>
               <textarea className={textareaCls} value={f.description ?? ""} onChange={(e) => setF({ ...f, description: e.target.value })} />
             </Field>
+          </div>
+          <div className="sm:col-span-2">
+            <AiSuggest
+              title={f.title}
+              description={f.description ?? ""}
+              projectId={doc.project_id ?? null}
+              onApply={(s) =>
+                setF((prev) => ({
+                  ...prev,
+                  doc_type: s.docType,
+                  discipline: s.discipline,
+                  issuing_party: s.issuingParty ?? prev.issuing_party,
+                }))
+              }
+            />
           </div>
         </div>
         <DialogFooter>

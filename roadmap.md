@@ -10,4 +10,5 @@
 - [x] Public share page with expiry/revocation
 - [x] Link the gallery from the gateway
 - [x] Side-by-side version comparison (basic)
-- [ ] Later: AI classification, specialised CAD/BIM viewers (waiting on user decision)
+- [x] AI suggestion of category, discipline and issuing party from title + description (staff only)
+- [ ] Later: specialised CAD/BIM viewers (waiting on user decision)

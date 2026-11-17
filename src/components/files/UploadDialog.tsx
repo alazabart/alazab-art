@@ -8,6 +8,8 @@ import { useLang, useTx } from "@/lib/i18n";
 import { ALLOWED_EXTENSIONS, DISCIPLINES, DOC_TYPES, formatBytes, isAllowedFile } from "@/lib/files/constants";
 import { createDocumentWithFile } from "@/lib/files/upload";
 import { Field, inputCls, selectCls, textareaCls } from "./ui";
+import { AiSuggest } from "./AiSuggest";
+import { DESCRIPTION_MAX, TITLE_MAX } from "@/lib/files/classify";
 
 type Folder = { id: string; name: string; parent_id: string | null };
 type Item = { file: File; state: "waiting" | "uploading" | "done" | "error"; error?: string };
@@ -38,6 +40,7 @@ export default function UploadDialog({
   const [issuingParty, setIssuingParty] = useState("");
   const [revisionLabel, setRevisionLabel] = useState("");
   const [notes, setNotes] = useState("");
+  const [description, setDescription] = useState("");
   const [clientVisible, setClientVisible] = useState(false);
   const [busy, setBusy] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -60,6 +63,7 @@ export default function UploadDialog({
     setTitle("");
     setDocNumber("");
     setNotes("");
+    setDescription("");
     setRevisionLabel("");
   }
 
@@ -83,6 +87,7 @@ export default function UploadDialog({
           docType,
           discipline,
           issuingParty,
+          description,
           clientVisible,
           revisionLabel,
           notes,
@@ -177,13 +182,40 @@ export default function UploadDialog({
           {items.length <= 1 && (
             <>
               <Field label={tx("عنوان المستند", "Document title")}>
-                <input className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={items[0]?.file.name ?? ""} />
+                <input className={inputCls} value={title} maxLength={TITLE_MAX} onChange={(e) => setTitle(e.target.value)} placeholder={items[0]?.file.name ?? ""} />
               </Field>
               <Field label={tx("رقم المستند", "Document number")}>
                 <input className={inputCls} value={docNumber} onChange={(e) => setDocNumber(e.target.value)} placeholder="AZB-ARC-SD-001" dir="ltr" />
               </Field>
             </>
           )}
+          <div className="sm:col-span-2">
+            <Field
+              label={tx("وصف المستند", "Document description")}
+              hint={items.length > 1 ? tx("يُحفظ لكل الملفات المرفوعة معًا", "Saved on every file in this batch") : undefined}
+            >
+              <textarea
+                className={textareaCls}
+                value={description}
+                maxLength={DESCRIPTION_MAX}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={tx("مثال: لوحة تسليح سقف الدور الأرضي – مبنى B، صادرة من المكتب الاستشاري", "e.g. Ground floor slab reinforcement – Building B, issued by the consultant")}
+              />
+            </Field>
+          </div>
+          <div className="sm:col-span-2">
+            <AiSuggest
+              title={title || (items.length === 1 ? (items[0]?.file.name.replace(/\.[^.]+$/, "") ?? "") : "")}
+              description={description}
+              projectId={projectId}
+              onApply={(s) => {
+                setDocType(s.docType);
+                setDiscipline(s.discipline);
+                if (s.issuingParty) setIssuingParty(s.issuingParty);
+                toast.success(tx("تم تطبيق الاقتراح، راجعه قبل الرفع", "Suggestion applied — review it before uploading"));
+              }}
+            />
+          </div>
           <Field label={tx("التصنيف", "Category")}>
             <select className={selectCls} value={docType} onChange={(e) => setDocType(e.target.value)}>
               {DOC_TYPES.map((t) => (

@@ -61,6 +61,7 @@ export async function createDocumentWithFile(opts: {
   docType: string;
   discipline: string;
   issuingParty: string;
+  description?: string;
   clientVisible: boolean;
   revisionLabel: string;
   notes: string;
@@ -76,6 +77,7 @@ export async function createDocumentWithFile(opts: {
       doc_type: opts.docType,
       discipline: opts.discipline,
       issuing_party: opts.issuingParty.trim() || null,
+      description: opts.description?.trim() || null,
       client_visible: opts.clientVisible,
     })
     .select()
