@@ -12,3 +12,11 @@
 - [x] Side-by-side version comparison (basic)
 - [x] AI suggestion of category, discipline and issuing party from title + description (staff only)
 - [ ] Later: specialised CAD/BIM viewers (waiting on user decision)
+
+## AZ Docs — branded invoices, quotations and documents (Daftra)
+- [x] Brand templates from AzDocs designs: invoice + quotation (one page / multi-page), title document, maintenance receipt
+- [x] Print / save as PDF on A4
+- [x] Staff-only section in the signed-in area, linked from the gateway and the gallery
+- [x] Daftra reader: invoices and quotations list + single document with line items, product codes and photos
+- [ ] Connect the Daftra account (waiting on the subdomain from the user, then the API key in the secure card)
+- [ ] Confirm document numbering format (using year-month + Daftra number until the user answers)
