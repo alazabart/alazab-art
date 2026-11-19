@@ -41,6 +41,8 @@ export default function FilesShell() {
     { to: "/files/projects", label: tx("المشروعات", "Projects"), icon: FolderKanban, exact: false, show: true },
     { to: "/files/gallery", label: tx("المعرض", "Gallery"), icon: Images, exact: false, show: true },
     { to: "/files/approvals", label: tx("الاعتمادات", "Approvals"), icon: FileCheck2, exact: false, show: true },
+    // رابط المستندات والفواتير للموظفين:
+    { to: "/azdocs", label: tx("المستندات والفواتير", "Documents & Invoices"), icon: FileText, exact: false, show: me?.isStaff ?? false },
     { to: "/files/shares", label: tx("المشاركات", "Shares"), icon: Share2, exact: false, show: me?.isStaff ?? false },
     { to: "/files/archive", label: tx("الأرشيف", "Archive"), icon: Archive, exact: false, show: me?.isStaff ?? false },
     { to: "/files/users", label: tx("المستخدمون", "Users"), icon: Users, exact: false, show: me?.isAdmin ?? false },
