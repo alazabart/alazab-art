@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listSalesDocs, getSalesDoc } from "@/lib/azdocs/daftra.functions";
 import { SalesDocPrint } from "@/components/azdocs/SalesDocPrint";
+import { docCode } from "@/lib/azdocs/model";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,7 +31,17 @@ function AzDocsPage() {
   });
 
   if (selectedId && docQuery.data?.ok) {
-    return <SalesDocPrint doc={docQuery.data.doc} onBack={() => setSelectedId(null)} />;
+    return (
+      <div className="py-6">
+        <div className="mb-4 flex justify-center gap-2 print:hidden">
+          <Button variant="outline" onClick={() => setSelectedId(null)}>رجوع للمستندات</Button>
+          <Button onClick={() => window.print()} className="gap-2">
+            <Printer className="h-4 w-4" /> طباعة A4
+          </Button>
+        </div>
+        <SalesDocPrint doc={docQuery.data.doc} />
+      </div>
+    );
   }
 
   return (
@@ -83,7 +94,7 @@ function AzDocsPage() {
             <tbody>
               {listQuery.data.rows.map((row) => (
                 <tr key={row.id} className="border-b hover:bg-slate-50/50">
-                  <td className="p-3 font-mono font-bold text-[#030957]">{row.formattedNumber}</td>
+                  <td className="p-3 font-mono font-bold text-[#030957]">{docCode(kind, row.date, row.number)}</td>
                   <td className="p-3">{row.clientName}</td>
                   <td className="p-3 text-slate-500">{row.date}</td>
                   <td className="p-3 font-mono font-semibold">{row.total} ج.م</td>
