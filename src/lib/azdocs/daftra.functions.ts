@@ -4,6 +4,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
+  daftraHead,
+  daftraItems,
   normalizeDaftraDoc,
   normalizeDaftraListRow,
   normalizeDaftraProduct,
@@ -45,7 +47,7 @@ export const listSalesDocs = createServerFn({ method: "POST" })
     try {
       const { daftraGet } = await import("./daftra.server");
       const query: Record<string, string | number> = { page: data.page, limit: 20 };
-      if (data.q) query[data.kind === "invoice" ? "keywords" : "name"] = data.q;
+      if (data.q) query["keywords"] = data.q;
       const body = await daftraGet(`/${PATH[data.kind]}.json`, query);
       const rows = Array.isArray(body["data"]) ? (body["data"] as Record<string, unknown>[]) : [];
       const pg = (body["pagination"] ?? {}) as Record<string, unknown>;
@@ -72,25 +74,40 @@ export const getSalesDoc = createServerFn({ method: "POST" })
       const { daftraGet } = await import("./daftra.server");
       const body = await daftraGet(`/${PATH[data.kind]}/${data.id}.json`);
       const raw = (body["data"] ?? {}) as Record<string, unknown>;
-      const itemsRaw = raw["InvoiceItem"] ?? raw["EstimateItem"];
-      const items = Array.isArray(itemsRaw) ? (itemsRaw as Record<string, unknown>[]) : [];
-      const productIds = [...new Set(items.map((i) => String(i["product_id"] ?? "")).filter((id) => /^\d+$/.test(id) && id !== "0"))].slice(0, 40);
+      const head = daftraHead(data.kind, raw);
+      const items = daftraItems(data.kind, raw);
+      const productIds = [
+        ...new Set(items.map((i) => String(i["product_id"] ?? "")).filter((id) => /^\d+$/.test(id) && id !== "0")),
+      ].slice(0, 80);
 
-      // Daftra is rate limited: fetch product details a few at a time.
+      // Representative name from the staff record (the document only holds its id).
+      let representative = "";
+      const staffId = String(head["staff_id"] ?? "");
+      if (/^\d+$/.test(staffId) && staffId !== "0") {
+        try {
+          const s = await daftraGet(`/staff/${staffId}.json`);
+          const staff = ((s["data"] as Record<string, unknown> | undefined)?.["Staff"] ?? {}) as Record<string, unknown>;
+          representative = String(staff["full_name"] ?? staff["name"] ?? "").trim();
+        } catch {
+          // Optional on the print.
+        }
+      }
+
+      // Product photos live on the product record; Daftra is rate limited, so a few at a time.
       const products: Record<string, ProductInfo> = {};
-      for (let i = 0; i < productIds.length; i += 3) {
+      for (let i = 0; i < productIds.length; i += 4) {
         await Promise.all(
-          productIds.slice(i, i + 3).map(async (pid) => {
+          productIds.slice(i, i + 4).map(async (pid) => {
             try {
               const p = await daftraGet(`/products/${pid}.json`);
               products[pid] = normalizeDaftraProduct((p["data"] ?? {}) as Record<string, unknown>);
             } catch {
-              // A missing product only loses its code/photo.
+              // A missing product only loses its photo.
             }
           }),
         );
       }
-      return { ok: true, doc: normalizeDaftraDoc(data.kind, raw, products) };
+      return { ok: true, doc: normalizeDaftraDoc(data.kind, raw, products, representative) };
     } catch (e) {
       return failure(e);
     }

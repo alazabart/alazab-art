@@ -350,6 +350,14 @@
 .az-table .az-img-cell { height: 100%; }
 .az-tablewrap { margin: 0 10mm; }
 
+.az-spacer { height: 18mm; }
+.az-table td.az-item { vertical-align: middle; }
+.az-item-in { overflow: hidden; display: flex; flex-direction: column; gap: 0.8mm; }
+.az-item-in strong { font-weight: 700; font-size: 8pt; color: var(--doc-navy); line-height: 1.35; }
+.az-table td.az-item .az-item-in small { margin-top: 0; font-size: 6.4pt; line-height: 1.45; }
+.az-table td.az-code { font-size: 7.5pt; font-weight: 600; letter-spacing: 0.02em; word-break: break-all; }
+.az-totals tr.az-final small { font-size: 6.5pt; }
+
 /* Totals + rules */
 .az-summary { display: grid; grid-template-columns: 70mm 1fr; gap: 6mm; margin: 2.5mm 10mm 0; align-items: start; }
 .az-totals { width: 100%; border-collapse: collapse; }

@@ -8,6 +8,7 @@ export interface LineItem {
   description: string;
   quantity: number;
   unitPrice: number;
+  /** Line total before tax (quantity × unit price − line discount). */
   total: number;
   imageUrl: string | null;
 }
@@ -16,7 +17,7 @@ export interface SalesDoc {
   kind: SalesKind;
   /** Daftra record id (or "sample"). */
   id: string;
-  /** Daftra's own number. */
+  /** Daftra's own number, e.g. AZ-INV-2026-0160. */
   number: string;
   date: string; // YYYY-MM-DD
   currency: string;
@@ -27,7 +28,9 @@ export interface SalesDoc {
   section: string;
   paymentProfile: PaymentProfileId;
   items: LineItem[];
+  /** Before tax, after discount. */
   subtotal: number;
+  /** Net of all taxes (VAT minus withholding). */
   tax: number;
   paid: number;
   /** Amount still due: total with tax minus paid. */
@@ -40,14 +43,20 @@ export const KIND_PREFIX: Record<SalesKind, string> = { invoice: "INV", quote: "
 export const KIND_TITLE: Record<SalesKind, string> = { invoice: "INVOICE", quote: "QUOTATION" };
 
 /**
- * Code printed in the yellow tab: AZ-{INV|QUT}-YYYY-MM-{10000 + Daftra number}.
- * Non-numeric Daftra numbers are kept as they are after the month.
+ * Code printed in the yellow tab, year and month taken from the document date:
+ * - Daftra "AZ-INV-2026-0160" → "AZ-INV-2026-11-0160" (Daftra's sequence kept)
+ * - plain Daftra number 25 → "AZ-INV-2026-11-10025"
+ * - anything else (e.g. "draft-332") is printed as it is.
  */
 export function docCode(kind: SalesKind, date: string, number: string): string {
   const [y, m] = ymOf(date);
   const n = number.trim();
-  const seq = /^\d+$/.test(n) ? String(10000 + Number(n)) : n || "00000";
-  return `AZ-${KIND_PREFIX[kind]}-${y}-${m}-${seq}`;
+  const prefix = `AZ-${KIND_PREFIX[kind]}-${y}-${m}`;
+  if (!n) return `${prefix}-00000`;
+  if (/^\d+$/.test(n)) return `${prefix}-${10000 + Number(n)}`;
+  const az = /^AZ-[A-Z]+-\d{4}-(\d+)$/i.exec(n);
+  if (az) return `${prefix}-${az[1]}`;
+  return n;
 }
 
 export function ymOf(date: string): [string, string] {
@@ -55,6 +64,16 @@ export function ymOf(date: string): [string, string] {
   if (match) return [match[1]!, match[2]!];
   const d = new Date();
   return [String(d.getFullYear()), String(d.getMonth() + 1).padStart(2, "0")];
+}
+
+/** Daftra returns YYYY-MM-DD in lists and DD-MM-YYYY in single documents. */
+export function toIsoDate(value: unknown): string {
+  const s = String(value ?? "").trim();
+  const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const dmy = /^(\d{2})[-/.](\d{2})[-/.](\d{4})/.exec(s);
+  if (dmy) return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
+  return "";
 }
 
 /** Rows that fit each page type of the multi-page design. */
@@ -113,11 +132,23 @@ const num = (v: unknown): number => {
 };
 const str = (v: unknown): string => (v === null || v === undefined ? "" : String(v)).trim();
 const obj = (v: unknown): Raw => (v && typeof v === "object" && !Array.isArray(v) ? (v as Raw) : {});
-const arr = (v: unknown): Raw[] => (Array.isArray(v) ? v.map(obj) : v && typeof v === "object" ? Object.values(v as Raw).map(obj) : []);
+const arr = (v: unknown): Raw[] =>
+  Array.isArray(v) ? v.map(obj) : v && typeof v === "object" ? Object.values(v as Raw).map(obj) : [];
 
 export interface ProductInfo {
   code: string;
   imageUrl: string | null;
+}
+
+/** The record inside a Daftra single invoice / estimate response `data`. */
+export function daftraHead(kind: SalesKind, data: Raw): Raw {
+  return obj(data[kind === "invoice" ? "Invoice" : "Estimate"] ?? data["Invoice"] ?? data["Estimate"]);
+}
+
+/** Line items of a single document; Daftra nests them in the record and names them InvoiceItem for both kinds. */
+export function daftraItems(kind: SalesKind, data: Raw): Raw[] {
+  const head = daftraHead(kind, data);
+  return arr(head["InvoiceItem"] ?? head["EstimateItem"] ?? data["InvoiceItem"] ?? data["EstimateItem"]);
 }
 
 /** Converts a Daftra single invoice / estimate response (`data`) into the template model. */
@@ -125,73 +156,85 @@ export function normalizeDaftraDoc(
   kind: SalesKind,
   data: Raw,
   products: Record<string, ProductInfo> = {},
+  representative = "",
 ): SalesDoc {
-  const head = obj(data[kind === "invoice" ? "Invoice" : "Estimate"] ?? data["Invoice"]);
-  const client = obj(data["Client"]);
-  const items = arr(data["InvoiceItem"] ?? data["EstimateItem"]);
+  const head = daftraHead(kind, data);
+  const client = obj(head["Client"] ?? data["Client"]);
+  const items = daftraItems(kind, data);
 
   const lineItems: LineItem[] = items.map((it) => {
     const quantity = num(it["quantity"]);
     const unitPrice = num(it["unit_price"]);
-    const subtotal = it["subtotal"] !== undefined ? num(it["subtotal"]) : quantity * unitPrice - num(it["calculated_discount"]);
+    const embedded = obj(it["Product"]);
     const p = products[str(it["product_id"])];
     return {
-      code: p?.code ?? "",
+      code: p?.code || str(embedded["product_code"]) || str(embedded["barcode"]),
       name: str(it["item"]),
       description: str(it["description"]),
       quantity,
       unitPrice,
-      total: subtotal,
+      total: round2(quantity * unitPrice - num(it["calculated_discount"])),
       imageUrl: p?.imageUrl ?? null,
     };
   });
 
   const itemsSum = lineItems.reduce((s, i) => s + i.total, 0);
-  const subtotal = head["summary_subtotal"] !== undefined ? num(head["summary_subtotal"]) - num(head["summary_discount"]) : itemsSum;
-  const grand = head["summary_total"] !== undefined ? num(head["summary_total"]) : subtotal;
-  const tax = Math.max(0, round2(grand - subtotal));
+  const subtotal =
+    head["summary_subtotal"] !== undefined && head["summary_subtotal"] !== null
+      ? num(head["summary_subtotal"]) - num(head["summary_discount"])
+      : itemsSum;
+  const grand = head["summary_total"] !== undefined && head["summary_total"] !== null ? num(head["summary_total"]) : subtotal;
   const paid = num(head["summary_paid"]);
+  const unpaid = head["summary_unpaid"];
 
   const name =
     str(head["client_business_name"]) ||
     [str(head["client_first_name"]), str(head["client_last_name"])].filter(Boolean).join(" ") ||
     str(client["business_name"]);
-  const address = [head["client_address1"] ?? client["address1"], head["client_address2"] ?? client["address2"], head["client_city"] ?? client["city"]]
-    .map(str)
+  const address = [
+    str(head["client_address1"]) || str(client["address1"]),
+    str(head["client_address2"]) || str(client["address2"]),
+    str(head["client_city"]) || str(client["city"]),
+    str(head["client_state"]) || str(client["state"]),
+  ]
     .filter(Boolean)
-    .join("، ");
-  const staff = obj(data["Staff"] ?? data["SalesPerson"]);
+    .join(", ");
 
   return {
     kind,
     id: str(head["id"]),
     number: str(head["no"]),
-    date: str(head["date"]).slice(0, 10),
+    date: toIsoDate(head["date"]) || toIsoDate(head["issue_date"]),
     currency: str(head["currency_code"]) || "EGP",
     clientName: name,
-    clientPhone: str(client["phone2"]) || str(client["phone1"]) || str(head["client_phone"]),
+    clientPhone:
+      str(head["client_phone2"]) || str(head["client_phone1"]) || str(client["phone2"]) || str(client["phone1"]),
     clientAddress: address,
-    representative: str(staff["name"]) || str(staff["full_name"]),
-    section: "",
+    representative,
+    section: str(obj(head["OrderSource"] ?? data["OrderSource"])["name"]),
     paymentProfile: "combined",
     items: lineItems,
     subtotal: round2(subtotal),
-    tax,
+    tax: round2(grand - subtotal),
     paid: round2(paid),
-    finalTotal: round2(Math.max(0, grand - paid)),
+    finalTotal: round2(unpaid !== undefined && unpaid !== null && unpaid !== "" ? num(unpaid) : Math.max(0, grand - paid)),
     qrValue: str(head["invoice_html_url"]) || str(head["estimate_html_url"]) || null,
   };
 }
 
-/** Pulls the product code and first photo out of a Daftra single-product response (`data`). */
+/** Pulls the product code and default photo out of a Daftra single-product response (`data`). */
 export function normalizeDaftraProduct(data: Raw): ProductInfo {
   const product = obj(data["Product"]);
-  const images = arr(data["ProductImage"]);
+  const images = [
+    ...arr(product["ProductImageS3"] ?? data["ProductImageS3"]),
+    ...arr(product["ProductImage"] ?? data["ProductImage"]),
+    obj(product["ProductMasterImage"] ?? data["ProductMasterImage"]),
+  ].sort((a, b) => num(b["default"]) - num(a["default"]));
   let imageUrl: string | null = null;
   for (const img of images) {
-    for (const key of ["file_full_path", "full_path", "url", "image", "file"]) {
+    for (const key of ["file_full_path", "full_path", "url"]) {
       const v = str(img[key]);
-      if (/^https?:\/\//.test(v)) {
+      if (/^https:\/\//.test(v)) {
         imageUrl = v;
         break;
       }
@@ -212,12 +255,12 @@ export interface SalesListRow {
 }
 
 export function normalizeDaftraListRow(kind: SalesKind, row: Raw): SalesListRow {
-  const head = obj(row[kind === "invoice" ? "Invoice" : "Estimate"] ?? row["Invoice"]);
-  const client = obj(row["Client"]);
+  const head = obj(row[kind === "invoice" ? "Invoice" : "Estimate"] ?? row["Invoice"] ?? row["Estimate"]);
+  const client = obj(row["Client"] ?? head["Client"]);
   return {
     id: str(head["id"]),
     number: str(head["no"]),
-    date: str(head["date"]).slice(0, 10),
+    date: toIsoDate(head["date"]),
     clientName:
       str(head["client_business_name"]) ||
       [str(head["client_first_name"]), str(head["client_last_name"])].filter(Boolean).join(" ") ||
@@ -230,43 +273,4 @@ export function normalizeDaftraListRow(kind: SalesKind, row: Raw): SalesListRow 
 
 function round2(v: number) {
   return Math.round(v * 100) / 100;
-}
-
-/* ---------- Sample (shown before Daftra is connected) ---------- */
-
-export function sampleSalesDoc(kind: SalesKind, itemCount = 3): SalesDoc {
-  const catalogue: Omit<LineItem, "total">[] = [
-    { code: "SL-PL-6060", name: "Panel light 60×60 — 48W", description: "", quantity: 24, unitPrice: 850, imageUrl: null },
-    { code: "SL-TR-12", name: "Track spot 12W — black", description: "", quantity: 40, unitPrice: 420, imageUrl: null },
-    { code: "AZ-GYP-01", name: "Gypsum board ceiling — supply & install (m²)", description: "", quantity: 120, unitPrice: 310, imageUrl: null },
-    { code: "SL-LS-5M", name: "LED strip 5m — warm white", description: "", quantity: 30, unitPrice: 260, imageUrl: null },
-    { code: "AZ-PNT-02", name: "Wall painting — Jotun (m²)", description: "", quantity: 300, unitPrice: 95, imageUrl: null },
-    { code: "SL-DL-9", name: "Downlight 9W — recessed", description: "", quantity: 60, unitPrice: 180, imageUrl: null },
-  ];
-  const items = Array.from({ length: itemCount }, (_, i) => {
-    const c = catalogue[i % catalogue.length]!;
-    return { ...c, total: c.quantity * c.unitPrice };
-  });
-  const subtotal = items.reduce((s, i) => s + i.total, 0);
-  const tax = round2(subtotal * 0.14);
-  const paid = kind === "invoice" ? 20000 : 0;
-  return {
-    kind,
-    id: "sample",
-    number: "1",
-    date: new Date().toISOString().slice(0, 10),
-    currency: "EGP",
-    clientName: "شركة النيل للتطوير العقاري",
-    clientPhone: "+20 100 000 0000",
-    clientAddress: "التجمع الخامس، القاهرة الجديدة",
-    representative: "م. أحمد سالم",
-    section: kind === "invoice" ? "Smart Lights" : "Finishing works",
-    paymentProfile: "combined",
-    items,
-    subtotal,
-    tax,
-    paid,
-    finalTotal: round2(subtotal + tax - paid),
-    qrValue: null,
-  };
 }
