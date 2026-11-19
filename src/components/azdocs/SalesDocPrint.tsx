@@ -72,6 +72,7 @@ export function SalesDocPrint({ doc, paymentProfile }: Props) {
                       <p>Tax: {COMPANY.taxNumber}</p>
                     </div>
                   </header>
+
                   <div className="az-info">
                     <div>
                       <b>Date:</b>
@@ -82,11 +83,11 @@ export function SalesDocPrint({ doc, paymentProfile }: Props) {
                       <span>{pay.payTo}</span>
                     </div>
                     <div>
-                      <b>Invoice to:</b>
+                      <b>{doc.kind === "quote" ? "Quotation to:" : "Invoice to:"}</b>
                       <span>{doc.clientName}</span>
                     </div>
                     <div>
-                      <b>Invoice Number:</b>
+                      <b>{doc.kind === "quote" ? "Quotation Number:" : "Invoice Number:"}</b>
                       <span>{code}</span>
                     </div>
                     <div>
