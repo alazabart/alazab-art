@@ -2,7 +2,15 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { COMPANY, PAYMENT_PROFILES, RULES, type PaymentProfileId } from "@/lib/azdocs/company";
-import { KIND_TITLE, docCode, money, paginate, qty, type PagePlan, type SalesDoc } from "@/lib/azdocs/model";
+import {
+  KIND_TITLE,
+  docCode,
+  money,
+  paginate,
+  qty,
+  type PagePlan,
+  type SalesDoc,
+} from "@/lib/azdocs/model";
 import logo from "@/assets/alazab-logo.png.asset.json";
 import watermark from "@/assets/az-watermark.png.asset.json";
 
@@ -39,7 +47,9 @@ export function SalesDocPrint({ doc, paymentProfile }: Props) {
 
   useEffect(() => {
     let alive = true;
-    const value = doc.qrValue || `${code} | ${doc.clientName} | ${money(doc.subtotal + doc.tax)} ${doc.currency}`;
+    const value =
+      doc.qrValue ||
+      `${code} | ${doc.clientName} | ${money(doc.subtotal + doc.tax)} ${doc.currency}`;
     QRCode.toDataURL(value, { width: 240, margin: 0, errorCorrectionLevel: "M" })
       .then((url) => alive && setQr(url))
       .catch(() => alive && setQr(""));
@@ -56,7 +66,11 @@ export function SalesDocPrint({ doc, paymentProfile }: Props) {
         const rows = doc.items.slice(p.start, p.end);
         const fillers = Math.max(0, p.capacity - rows.length);
         return (
-          <section key={pi} className="az-page" aria-label={`${KIND_TITLE[doc.kind]} page ${pi + 1}`}>
+          <section
+            key={pi}
+            className="az-page"
+            aria-label={`${KIND_TITLE[doc.kind]} page ${pi + 1}`}
+          >
             <div className="az-ribbon">
               <span>{code}</span>
             </div>
@@ -135,13 +149,19 @@ export function SalesDocPrint({ doc, paymentProfile }: Props) {
                         <td className="az-item">
                           <div className="az-item-in" style={{ maxHeight: `calc(${rowH} - 2mm)` }}>
                             <strong>{it.name}</strong>
-                            {it.description && it.description !== it.name && <small>{it.description}</small>}
+                            {it.description && it.description !== it.name && (
+                              <small>{it.description}</small>
+                            )}
                           </div>
                         </td>
                         <td className="az-code">{it.code}</td>
                         <td className="az-img-cell">
                           {it.imageUrl && (
-                            <img src={it.imageUrl} alt={it.name} style={{ maxHeight: `calc(${rowH} - 3mm)` }} />
+                            <img
+                              src={it.imageUrl}
+                              alt={it.name}
+                              style={{ maxHeight: `calc(${rowH} - 3mm)` }}
+                            />
                           )}
                         </td>
                       </tr>

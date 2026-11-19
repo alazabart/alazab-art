@@ -58,7 +58,11 @@ export const PROJECT_STATUSES: Labeled[] = [
   { id: "completed", ar: "مكتمل", en: "Completed" },
 ];
 
-export function labelOf(list: Labeled[] | { id: string; ar: string; en: string }[], id: string | null | undefined, lang: "ar" | "en") {
+export function labelOf(
+  list: Labeled[] | { id: string; ar: string; en: string }[],
+  id: string | null | undefined,
+  lang: "ar" | "en",
+) {
   const item = list.find((x) => x.id === id);
   if (!item) return id ?? "";
   return lang === "ar" ? item.ar : item.en;
@@ -66,17 +70,37 @@ export function labelOf(list: Labeled[] | { id: string; ar: string; en: string }
 
 /* ---------- File formats (from the plan's target formats) ---------- */
 
-export type FileKind = "image" | "pdf" | "video" | "office" | "model3d" | "model3d_raw" | "cad" | "other";
+export type FileKind =
+  "image" | "pdf" | "video" | "office" | "model3d" | "model3d_raw" | "cad" | "other";
 
 const KIND_BY_EXT: Record<string, FileKind> = {
-  jpg: "image", jpeg: "image", png: "image", webp: "image", svg: "image", gif: "image",
+  jpg: "image",
+  jpeg: "image",
+  png: "image",
+  webp: "image",
+  svg: "image",
+  gif: "image",
   pdf: "pdf",
-  mp4: "video", webm: "video", mov: "video",
-  doc: "office", docx: "office", xls: "office", xlsx: "office", ppt: "office", pptx: "office",
-  glb: "model3d", gltf: "model3d",
-  obj: "model3d_raw", stl: "model3d_raw",
-  dwg: "cad", dxf: "cad", ifc: "cad", rvt: "cad",
-  txt: "other", csv: "other", zip: "other",
+  mp4: "video",
+  webm: "video",
+  mov: "video",
+  doc: "office",
+  docx: "office",
+  xls: "office",
+  xlsx: "office",
+  ppt: "office",
+  pptx: "office",
+  glb: "model3d",
+  gltf: "model3d",
+  obj: "model3d_raw",
+  stl: "model3d_raw",
+  dwg: "cad",
+  dxf: "cad",
+  ifc: "cad",
+  rvt: "cad",
+  txt: "other",
+  csv: "other",
+  zip: "other",
 };
 
 /** Extensions the gallery accepts for upload. */
@@ -147,7 +171,10 @@ export function formatDateTime(iso: string | null | undefined, lang: "ar" | "en"
 }
 
 export type ShareState = "active" | "expired" | "revoked";
-export function shareState(link: { expires_at: string; revoked_at: string | null }, now = new Date()): ShareState {
+export function shareState(
+  link: { expires_at: string; revoked_at: string | null },
+  now = new Date(),
+): ShareState {
   if (link.revoked_at) return "revoked";
   if (new Date(link.expires_at) <= now) return "expired";
   return "active";

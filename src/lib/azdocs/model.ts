@@ -104,7 +104,13 @@ export function paginate(count: number): PagePlan[] {
   let at = firstTake;
   while (n - at > PAGE_ROWS.last) {
     const take = Math.min(PAGE_ROWS.middle, n - at - 1);
-    pages.push({ start: at, end: at + take, capacity: PAGE_ROWS.middle, header: false, totals: false });
+    pages.push({
+      start: at,
+      end: at + take,
+      capacity: PAGE_ROWS.middle,
+      header: false,
+      totals: false,
+    });
     at += take;
   }
   pages.push({ start: at, end: n, capacity: PAGE_ROWS.last, header: false, totals: true });
@@ -131,9 +137,14 @@ const num = (v: unknown): number => {
   return Number.isFinite(n) ? n : 0;
 };
 const str = (v: unknown): string => (v === null || v === undefined ? "" : String(v)).trim();
-const obj = (v: unknown): Raw => (v && typeof v === "object" && !Array.isArray(v) ? (v as Raw) : {});
+const obj = (v: unknown): Raw =>
+  v && typeof v === "object" && !Array.isArray(v) ? (v as Raw) : {};
 const arr = (v: unknown): Raw[] =>
-  Array.isArray(v) ? v.map(obj) : v && typeof v === "object" ? Object.values(v as Raw).map(obj) : [];
+  Array.isArray(v)
+    ? v.map(obj)
+    : v && typeof v === "object"
+      ? Object.values(v as Raw).map(obj)
+      : [];
 
 export interface ProductInfo {
   code: string;
@@ -142,13 +153,17 @@ export interface ProductInfo {
 
 /** The record inside a Daftra single invoice / estimate response `data`. */
 export function daftraHead(kind: SalesKind, data: Raw): Raw {
-  return obj(data[kind === "invoice" ? "Invoice" : "Estimate"] ?? data["Invoice"] ?? data["Estimate"]);
+  return obj(
+    data[kind === "invoice" ? "Invoice" : "Estimate"] ?? data["Invoice"] ?? data["Estimate"],
+  );
 }
 
 /** Line items of a single document; Daftra nests them in the record and names them InvoiceItem for both kinds. */
 export function daftraItems(kind: SalesKind, data: Raw): Raw[] {
   const head = daftraHead(kind, data);
-  return arr(head["InvoiceItem"] ?? head["EstimateItem"] ?? data["InvoiceItem"] ?? data["EstimateItem"]);
+  return arr(
+    head["InvoiceItem"] ?? head["EstimateItem"] ?? data["InvoiceItem"] ?? data["EstimateItem"],
+  );
 }
 
 /** Converts a Daftra single invoice / estimate response (`data`) into the template model. */
@@ -183,7 +198,10 @@ export function normalizeDaftraDoc(
     head["summary_subtotal"] !== undefined && head["summary_subtotal"] !== null
       ? num(head["summary_subtotal"]) - num(head["summary_discount"])
       : itemsSum;
-  const grand = head["summary_total"] !== undefined && head["summary_total"] !== null ? num(head["summary_total"]) : subtotal;
+  const grand =
+    head["summary_total"] !== undefined && head["summary_total"] !== null
+      ? num(head["summary_total"])
+      : subtotal;
   const paid = num(head["summary_paid"]);
   const unpaid = head["summary_unpaid"];
 
@@ -208,7 +226,10 @@ export function normalizeDaftraDoc(
     currency: str(head["currency_code"]) || "EGP",
     clientName: name,
     clientPhone:
-      str(head["client_phone2"]) || str(head["client_phone1"]) || str(client["phone2"]) || str(client["phone1"]),
+      str(head["client_phone2"]) ||
+      str(head["client_phone1"]) ||
+      str(client["phone2"]) ||
+      str(client["phone1"]),
     clientAddress: address,
     representative,
     section: str(obj(head["OrderSource"] ?? data["OrderSource"])["name"]),
@@ -217,7 +238,11 @@ export function normalizeDaftraDoc(
     subtotal: round2(subtotal),
     tax: round2(grand - subtotal),
     paid: round2(paid),
-    finalTotal: round2(unpaid !== undefined && unpaid !== null && unpaid !== "" ? num(unpaid) : Math.max(0, grand - paid)),
+    finalTotal: round2(
+      unpaid !== undefined && unpaid !== null && unpaid !== ""
+        ? num(unpaid)
+        : Math.max(0, grand - paid),
+    ),
     qrValue: str(head["invoice_html_url"]) || str(head["estimate_html_url"]) || null,
   };
 }
@@ -255,7 +280,9 @@ export interface SalesListRow {
 }
 
 export function normalizeDaftraListRow(kind: SalesKind, row: Raw): SalesListRow {
-  const head = obj(row[kind === "invoice" ? "Invoice" : "Estimate"] ?? row["Invoice"] ?? row["Estimate"]);
+  const head = obj(
+    row[kind === "invoice" ? "Invoice" : "Estimate"] ?? row["Invoice"] ?? row["Estimate"],
+  );
   const client = obj(row["Client"] ?? head["Client"]);
   return {
     id: str(head["id"]),
@@ -273,19 +300,4 @@ export function normalizeDaftraListRow(kind: SalesKind, row: Raw): SalesListRow 
 
 function round2(v: number) {
   return Math.round(v * 100) / 100;
-}
-
-export function docCode(kind: SalesKind, date: string, number: string): string {
-  const [y, m] = ymOf(date);
-  const n = number.trim();
-  const prefix = `AZ-${KIND_PREFIX[kind]}-${y}-${m}`;
-
-  if (!n) return `${prefix}-00000`;
-  // إذا كان الرقم من دفترة رقماً تسلسلياً بحتاً مثل 25:
-  if (/^\d+$/.test(n)) return `${prefix}-${10000 + Number(n)}`;
-  // إذا كان الرقم من دفترة يحتوي بالفعل على تسلسل مثل AZ-INV-2026-0160:
-  const az = /^AZ-[A-Z]+-\d{4}-(\d+)$/i.exec(n);
-  if (az) return `${prefix}-${az[1]}`; // ينتج: AZ-INV-2026-11-0160
-
-  return n;
 }

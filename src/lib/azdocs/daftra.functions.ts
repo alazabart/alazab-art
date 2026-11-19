@@ -26,7 +26,11 @@ async function ensureStaff(context: { supabase: SupabaseClient<Database>; userId
 
 function failure(e: unknown): DaftraFailure {
   if (e && typeof e === "object" && "code" in e && "message" in e) {
-    return { ok: false, code: String((e as { code: unknown }).code), message: String((e as { message: unknown }).message) };
+    return {
+      ok: false,
+      code: String((e as { code: unknown }).code),
+      message: String((e as { message: unknown }).message),
+    };
   }
   console.error(e);
   return { ok: false, code: "upstream", message: "Daftra request failed." };
@@ -42,25 +46,33 @@ const listSchema = z.object({
 export const listSalesDocs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: z.input<typeof listSchema>) => listSchema.parse(input))
-  .handler(async ({ data, context }): Promise<{ ok: true; rows: SalesListRow[]; page: number; pageCount: number } | DaftraFailure> => {
-    if (!(await ensureStaff(context))) return { ok: false, code: "forbidden", message: "Staff only." };
-    try {
-      const { daftraGet } = await import("./daftra.server");
-      const query: Record<string, string | number> = { page: data.page, limit: 20 };
-      if (data.q) query["keywords"] = data.q;
-      const body = await daftraGet(`/${PATH[data.kind]}.json`, query);
-      const rows = Array.isArray(body["data"]) ? (body["data"] as Record<string, unknown>[]) : [];
-      const pg = (body["pagination"] ?? {}) as Record<string, unknown>;
-      return {
-        ok: true,
-        rows: rows.map((r) => normalizeDaftraListRow(data.kind, r)),
-        page: Number(pg["page"] ?? data.page) || data.page,
-        pageCount: Number(pg["page_count"] ?? 1) || 1,
-      };
-    } catch (e) {
-      return failure(e);
-    }
-  });
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<
+      { ok: true; rows: SalesListRow[]; page: number; pageCount: number } | DaftraFailure
+    > => {
+      if (!(await ensureStaff(context)))
+        return { ok: false, code: "forbidden", message: "Staff only." };
+      try {
+        const { daftraGet } = await import("./daftra.server");
+        const query: Record<string, string | number> = { page: data.page, limit: 20 };
+        if (data.q) query["keywords"] = data.q;
+        const body = await daftraGet(`/${PATH[data.kind]}.json`, query);
+        const rows = Array.isArray(body["data"]) ? (body["data"] as Record<string, unknown>[]) : [];
+        const pg = (body["pagination"] ?? {}) as Record<string, unknown>;
+        return {
+          ok: true,
+          rows: rows.map((r) => normalizeDaftraListRow(data.kind, r)),
+          page: Number(pg["page"] ?? data.page) || data.page,
+          pageCount: Number(pg["page_count"] ?? 1) || 1,
+        };
+      } catch (e) {
+        return failure(e);
+      }
+    },
+  );
 
 const getSchema = z.object({ kind: kindSchema, id: z.string().regex(/^\d{1,12}$/) });
 
@@ -69,7 +81,8 @@ export const getSalesDoc = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: z.input<typeof getSchema>) => getSchema.parse(input))
   .handler(async ({ data, context }): Promise<{ ok: true; doc: SalesDoc } | DaftraFailure> => {
-    if (!(await ensureStaff(context))) return { ok: false, code: "forbidden", message: "Staff only." };
+    if (!(await ensureStaff(context)))
+      return { ok: false, code: "forbidden", message: "Staff only." };
     try {
       const { daftraGet } = await import("./daftra.server");
       const body = await daftraGet(`/${PATH[data.kind]}/${data.id}.json`);
@@ -77,7 +90,11 @@ export const getSalesDoc = createServerFn({ method: "POST" })
       const head = daftraHead(data.kind, raw);
       const items = daftraItems(data.kind, raw);
       const productIds = [
-        ...new Set(items.map((i) => String(i["product_id"] ?? "")).filter((id) => /^\d+$/.test(id) && id !== "0")),
+        ...new Set(
+          items
+            .map((i) => String(i["product_id"] ?? ""))
+            .filter((id) => /^\d+$/.test(id) && id !== "0"),
+        ),
       ].slice(0, 80);
 
       // Representative name from the staff record (the document only holds its id).
@@ -86,7 +103,8 @@ export const getSalesDoc = createServerFn({ method: "POST" })
       if (/^\d+$/.test(staffId) && staffId !== "0") {
         try {
           const s = await daftraGet(`/staff/${staffId}.json`);
-          const staff = ((s["data"] as Record<string, unknown> | undefined)?.["Staff"] ?? {}) as Record<string, unknown>;
+          const staff = ((s["data"] as Record<string, unknown> | undefined)?.["Staff"] ??
+            {}) as Record<string, unknown>;
           representative = String(staff["full_name"] ?? staff["name"] ?? "").trim();
         } catch {
           // Optional on the print.
@@ -117,12 +135,15 @@ export const getSalesDoc = createServerFn({ method: "POST" })
 export const daftraStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ ok: true; business: string } | DaftraFailure> => {
-    if (!(await ensureStaff(context))) return { ok: false, code: "forbidden", message: "Staff only." };
+    if (!(await ensureStaff(context)))
+      return { ok: false, code: "forbidden", message: "Staff only." };
     try {
       const { daftraGet, daftraConfigured } = await import("./daftra.server");
-      if (!daftraConfigured()) return { ok: false, code: "not_configured", message: "Daftra is not connected yet." };
+      if (!daftraConfigured())
+        return { ok: false, code: "not_configured", message: "Daftra is not connected yet." };
       const body = await daftraGet("/site_info.json");
-      const site = ((body["data"] as Record<string, unknown> | undefined)?.["Site"] ?? {}) as Record<string, unknown>;
+      const site = ((body["data"] as Record<string, unknown> | undefined)?.["Site"] ??
+        {}) as Record<string, unknown>;
       return { ok: true, business: String(site["business_name"] ?? site["subdomain"] ?? "Daftra") };
     } catch (e) {
       return failure(e);
