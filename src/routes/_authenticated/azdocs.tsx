@@ -34,7 +34,9 @@ function AzDocsPage() {
     return (
       <div className="py-6">
         <div className="mb-4 flex justify-center gap-2 print:hidden">
-          <Button variant="outline" onClick={() => setSelectedId(null)}>رجوع للمستندات</Button>
+          <Button variant="outline" onClick={() => setSelectedId(null)}>
+            رجوع للمستندات
+          </Button>
           <Button onClick={() => window.print()} className="gap-2">
             <Printer className="h-4 w-4" /> طباعة A4
           </Button>
@@ -49,12 +51,20 @@ function AzDocsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#030957]">مستندات دفترة وقوالب الطباعة</h1>
-          <p className="text-sm text-slate-500">سحب مباشر للفواتير وعروض الأسعار من alazab-co.daftra.com وطباعتها بقوالب A4 الرسمية</p>
+          <p className="text-sm text-slate-500">
+            سحب مباشر للفواتير وعروض الأسعار من alazab-co.daftra.com وطباعتها بقوالب A4 الرسمية
+          </p>
         </div>
       </div>
 
       <div className="flex items-center justify-between gap-4 mb-6">
-        <Tabs value={kind} onValueChange={(v) => { setKind(v as "invoice" | "quote"); setSelectedId(null); }}>
+        <Tabs
+          value={kind}
+          onValueChange={(v) => {
+            setKind(v as "invoice" | "quote");
+            setSelectedId(null);
+          }}
+        >
           <TabsList>
             <TabsTrigger value="invoice">الفواتير</TabsTrigger>
             <TabsTrigger value="quote">عروض الأسعار</TabsTrigger>
@@ -94,7 +104,9 @@ function AzDocsPage() {
             <tbody>
               {listQuery.data.rows.map((row) => (
                 <tr key={row.id} className="border-b hover:bg-slate-50/50">
-                  <td className="p-3 font-mono font-bold text-[#030957]">{docCode(kind, row.date, row.number)}</td>
+                  <td className="p-3 font-mono font-bold text-[#030957]">
+                    {docCode(kind, row.date, row.number)}
+                  </td>
                   <td className="p-3">{row.clientName}</td>
                   <td className="p-3 text-slate-500">{row.date}</td>
                   <td className="p-3 font-mono font-semibold">{row.total} ج.م</td>

@@ -9,7 +9,7 @@ export function loadCatalog(): ServiceItem[] {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
       return parsed.filter(
-        (s): s is ServiceItem => !!s && typeof s.url === "string" && typeof s.name === "string"
+        (s): s is ServiceItem => !!s && typeof s.url === "string" && typeof s.name === "string",
       );
     }
   } catch {

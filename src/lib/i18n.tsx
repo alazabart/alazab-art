@@ -5,7 +5,8 @@ export type Lang = "ar" | "en";
 const ar = {
   appName: "Alazab Cloud",
   tagline: "بوابة واحدة لكل خدمات العزب",
-  taglineSub: "كل ما تقدمه العزب في مكان واحد — واضح، وسريع، ومنظم. دون تسجيل، ودون معرفة أين يستضيف كل نظام.",
+  taglineSub:
+    "كل ما تقدمه العزب في مكان واحد — واضح، وسريع، ومنظم. دون تسجيل، ودون معرفة أين يستضيف كل نظام.",
   searchPlaceholder: "ابحث في خدمات العزب أو الويب…",
   webSearch: "ابحث في الويب",
   webSearchFor: (q: string) => `ابحث في الويب عن «${q}»`,
@@ -59,7 +60,8 @@ const ar = {
 const en: typeof ar = {
   appName: "Alazab Cloud",
   tagline: "One Gateway. All Alazab Services.",
-  taglineSub: "Everything Alazab offers in one place — clear, fast and organized. No sign-up, and no need to know where each system lives.",
+  taglineSub:
+    "Everything Alazab offers in one place — clear, fast and organized. No sign-up, and no need to know where each system lives.",
   searchPlaceholder: "Search Alazab services or the web…",
   webSearch: "Search the web",
   webSearchFor: (q: string) => `Search the web for “${q}”`,
@@ -76,7 +78,8 @@ const en: typeof ar = {
   },
   noResults: "No matching services in the Alazab directory.",
   openService: "Open",
-  footerNote: "Services are managed from Settings — add any new site or system without redesigning the gateway.",
+  footerNote:
+    "Services are managed from Settings — add any new site or system without redesigning the gateway.",
   footerRights: "Alazab Cloud — the unified digital gateway of the Alazab group",
   notFoundTitle: "Page not found",
   notFoundBody: "This link is not part of the gateway.",

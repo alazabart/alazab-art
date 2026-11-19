@@ -33,7 +33,9 @@ export default function FilePreview({
 
   if (!url) {
     return (
-      <div className={`grid place-items-center rounded-xl border border-border bg-background/40 ${className}`}>
+      <div
+        className={`grid place-items-center rounded-xl border border-border bg-background/40 ${className}`}
+      >
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -61,7 +63,14 @@ export default function FilePreview({
   }
   if (kind === "model3d") {
     return modelReady ? (
-      <model-viewer src={url} alt={fileName} camera-controls auto-rotate shadow-intensity="1" className={`block ${frame}`} />
+      <model-viewer
+        src={url}
+        alt={fileName}
+        camera-controls
+        auto-rotate
+        shadow-intensity="1"
+        className={`block ${frame}`}
+      />
     ) : (
       <div className={`${frame} grid place-items-center`}>
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -75,7 +84,10 @@ export default function FilePreview({
       <div className="max-w-sm">
         <DraftingCompass className="w-10 h-10 mx-auto text-primary" />
         <p className="mt-3 font-medium">
-          {tx(`لا تتوفر معاينة مباشرة لملفات ${ext} في المتصفح`, `No in-browser preview for ${ext} files`)}
+          {tx(
+            `لا تتوفر معاينة مباشرة لملفات ${ext} في المتصفح`,
+            `No in-browser preview for ${ext} files`,
+          )}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
           {kind === "cad"

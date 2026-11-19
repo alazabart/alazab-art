@@ -43,16 +43,19 @@ export async function daftraGet(
   if (!res.ok) {
     const body = await res.text();
     console.error(`Daftra request failed [${res.status}] ${path}: ${body.slice(0, 500)}`);
-    if (res.status === 401 || res.status === 403) throw new DaftraError("unauthorized", `Daftra refused the request [${res.status}].`);
+    if (res.status === 401 || res.status === 403)
+      throw new DaftraError("unauthorized", `Daftra refused the request [${res.status}].`);
     if (res.status === 404) throw new DaftraError("not_found", "Document not found in Daftra.");
-    if (res.status === 429) throw new DaftraError("rate_limited", "Daftra rate limit reached, try again in a minute.");
+    if (res.status === 429)
+      throw new DaftraError("rate_limited", "Daftra rate limit reached, try again in a minute.");
     throw new DaftraError("upstream", `Daftra error [${res.status}].`);
   }
 
   const body = (await res.json()) as Record<string, unknown>;
   if (body["result"] === "failed") {
     console.error(`Daftra reported failure ${path}: ${JSON.stringify(body).slice(0, 500)}`);
-    if (Number(body["code"]) === 404) throw new DaftraError("not_found", "Document not found in Daftra.");
+    if (Number(body["code"]) === 404)
+      throw new DaftraError("not_found", "Document not found in Daftra.");
     throw new DaftraError("upstream", String(body["message"] ?? "Daftra request failed."));
   }
   return body;
