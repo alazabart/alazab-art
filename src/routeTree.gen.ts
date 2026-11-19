@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StorageRouteImport } from './routes/storage'
+import { Route as AuthenticatedAzdocsRouteImport } from './routes/_authenticated/azdocs'
 import { Route as AuthenticatedFilesRouteImport } from './routes/_authenticated/files'
 import { Route as ShareTokenRouteImport } from './routes/share.$token'
 import { Route as AuthenticatedFilesIndexRouteImport } from './routes/_authenticated/files.index'
@@ -55,6 +56,11 @@ const StorageRoute = StorageRouteImport.update({
   id: '/storage',
   path: '/storage',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAzdocsRoute = AuthenticatedAzdocsRouteImport.update({
+  id: '/azdocs',
+  path: '/azdocs',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedFilesRoute = AuthenticatedFilesRouteImport.update({
   id: '/files',
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/storage': typeof StorageRoute
+  '/azdocs': typeof AuthenticatedAzdocsRoute
   '/files': typeof AuthenticatedFilesRouteWithChildren
   '/share/$token': typeof ShareTokenRoute
   '/files/approvals': typeof AuthenticatedFilesApprovalsRoute
@@ -143,6 +150,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/storage': typeof StorageRoute
+  '/azdocs': typeof AuthenticatedAzdocsRoute
   '/share/$token': typeof ShareTokenRoute
   '/files/approvals': typeof AuthenticatedFilesApprovalsRoute
   '/files/archive': typeof AuthenticatedFilesArchiveRoute
@@ -162,6 +170,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/storage': typeof StorageRoute
+  '/_authenticated/azdocs': typeof AuthenticatedAzdocsRoute
   '/_authenticated/files': typeof AuthenticatedFilesRouteWithChildren
   '/share/$token': typeof ShareTokenRoute
   '/_authenticated/files/approvals': typeof AuthenticatedFilesApprovalsRoute
@@ -182,6 +191,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/storage'
+    | '/azdocs'
     | '/files'
     | '/share/$token'
     | '/files/approvals'
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/storage'
+    | '/azdocs'
     | '/share/$token'
     | '/files/approvals'
     | '/files/archive'
@@ -218,6 +229,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/storage'
+    | '/_authenticated/azdocs'
     | '/_authenticated/files'
     | '/share/$token'
     | '/_authenticated/files/approvals'
@@ -284,6 +296,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/storage'
       preLoaderRoute: typeof StorageRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/azdocs': {
+      id: '/_authenticated/azdocs'
+      path: '/azdocs'
+      fullPath: '/azdocs'
+      preLoaderRoute: typeof AuthenticatedAzdocsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/files': {
       id: '/_authenticated/files'
@@ -395,10 +414,12 @@ const AuthenticatedFilesRouteWithChildren =
   AuthenticatedFilesRoute._addFileChildren(AuthenticatedFilesRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAzdocsRoute: typeof AuthenticatedAzdocsRoute
   AuthenticatedFilesRoute: typeof AuthenticatedFilesRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAzdocsRoute: AuthenticatedAzdocsRoute,
   AuthenticatedFilesRoute: AuthenticatedFilesRouteWithChildren,
 }
 
