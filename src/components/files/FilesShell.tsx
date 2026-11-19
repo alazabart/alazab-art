@@ -13,6 +13,7 @@ import {
   ArrowRight,
   ArrowLeft,
   Clock,
+  FileText,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { meQuery } from "@/lib/files/queries";
