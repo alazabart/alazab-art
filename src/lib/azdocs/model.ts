@@ -274,3 +274,18 @@ export function normalizeDaftraListRow(kind: SalesKind, row: Raw): SalesListRow 
 function round2(v: number) {
   return Math.round(v * 100) / 100;
 }
+
+export function docCode(kind: SalesKind, date: string, number: string): string {
+  const [y, m] = ymOf(date);
+  const n = number.trim();
+  const prefix = `AZ-${KIND_PREFIX[kind]}-${y}-${m}`;
+
+  if (!n) return `${prefix}-00000`;
+  // إذا كان الرقم من دفترة رقماً تسلسلياً بحتاً مثل 25:
+  if (/^\d+$/.test(n)) return `${prefix}-${10000 + Number(n)}`;
+  // إذا كان الرقم من دفترة يحتوي بالفعل على تسلسل مثل AZ-INV-2026-0160:
+  const az = /^AZ-[A-Z]+-\d{4}-(\d+)$/i.exec(n);
+  if (az) return `${prefix}-${az[1]}`; // ينتج: AZ-INV-2026-11-0160
+
+  return n;
+}
