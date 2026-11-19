@@ -14,6 +14,7 @@ import {
   Command,
   Sparkles,
   FolderOpen,
+  FileText,
 } from "lucide-react";
 import { loadCatalog } from "@/lib/catalog";
 import { STARTER_CATALOG, type ServiceItem } from "@/data/catalog";
@@ -151,12 +152,23 @@ export default function Index() {
             <FolderOpen className="w-4 h-4" />
             {isArabic ? "معرض الملفات" : "Files"}
           </Link>
+
+          {/* الرابط الجديد: المستندات والفواتير (Desktop) */}
           <Link
-            to="/files"
-            aria-label={isArabic ? "معرض الملفات" : "Files"}
-            className="sm:hidden grid place-items-center w-10 h-10 rounded-xl bg-primary text-primary-foreground shrink-0"
+            to="/azdocs"
+            className="hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-xl border border-primary/30 bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-all active:scale-95 shrink-0"
           >
-            <FolderOpen className="w-4 h-4" />
+            <FileText className="w-4 h-4" />
+            {isArabic ? "المستندات والفواتير" : "Documents"}
+          </Link>
+
+          {/* الرابط في شاشات الجوال (Mobile) */}
+          <Link
+            to="/azdocs"
+            aria-label={isArabic ? "المستندات والفواتير" : "Documents"}
+            className="sm:hidden grid place-items-center w-10 h-10 rounded-xl border border-primary/30 bg-primary/10 text-primary shrink-0"
+          >
+            <FileText className="w-4 h-4" />
           </Link>
           <Link
             to="/settings"
