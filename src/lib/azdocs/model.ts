@@ -124,6 +124,183 @@ export function money(value: number): string {
   });
 }
 
+export function formatCurrency(value: number, currency = "EGP", locale = "ar-EG"): string {
+  const amount = Number.isFinite(value) ? value : 0;
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `${money(amount)} ${currency}`;
+  }
+}
+
+const ARABIC_ONES = [
+  "",
+  "واحد",
+  "اثنان",
+  "ثلاثة",
+  "أربعة",
+  "خمسة",
+  "ستة",
+  "سبعة",
+  "ثمانية",
+  "تسعة",
+] as const;
+const ARABIC_TENS = [
+  "",
+  "عشرة",
+  "عشرون",
+  "ثلاثون",
+  "أربعون",
+  "خمسون",
+  "ستون",
+  "سبعون",
+  "ثمانون",
+  "تسعون",
+] as const;
+const ARABIC_HUNDREDS = [
+  "",
+  "مائة",
+  "مائتان",
+  "ثلاثمائة",
+  "أربعمائة",
+  "خمسمائة",
+  "ستمائة",
+  "سبعمائة",
+  "ثمانمائة",
+  "تسعمائة",
+] as const;
+const ARABIC_TEENS = [
+  "عشرة",
+  "أحد عشر",
+  "اثنا عشر",
+  "ثلاثة عشر",
+  "أربعة عشر",
+  "خمسة عشر",
+  "ستة عشر",
+  "سبعة عشر",
+  "ثمانية عشر",
+  "تسعة عشر",
+] as const;
+
+function underThousandToArabic(value: number): string {
+  const parts: string[] = [];
+  const hundreds = Math.floor(value / 100);
+  const remainder = value % 100;
+  if (hundreds) parts.push(ARABIC_HUNDREDS[hundreds]!);
+  if (remainder >= 10 && remainder < 20) {
+    parts.push(ARABIC_TEENS[remainder - 10]!);
+  } else if (remainder >= 20) {
+    const ones = remainder % 10;
+    parts.push(
+      ones
+        ? `${ARABIC_ONES[ones]} و${ARABIC_TENS[Math.floor(remainder / 10)]}`
+        : ARABIC_TENS[Math.floor(remainder / 10)]!,
+    );
+  } else if (remainder > 0) {
+    parts.push(ARABIC_ONES[remainder]!);
+  }
+  return parts.join(" و");
+}
+
+function quantityToArabic(value: number, singular: string, dual: string, plural: string): string {
+  if (value === 0) return `صفر ${singular}`;
+  if (value === 1) return `${singular} واحد`;
+  if (value === 2) return dual;
+  if (value <= 10) return `${underThousandToArabic(value)} ${plural}`;
+  return `${integerToArabic(value)} ${singular}ًا`;
+}
+
+function scaledGroupToArabic(
+  value: number,
+  singular: string,
+  dual: string,
+  plural: string,
+): string {
+  if (value === 1) return singular;
+  if (value === 2) return dual;
+  if (value <= 10) return `${underThousandToArabic(value)} ${plural}`;
+  return `${underThousandToArabic(value)} ${singular}ًا`;
+}
+
+function integerToArabic(value: number): string {
+  if (value === 0) return "صفر";
+  const groups = [
+    { divisor: 1_000_000, singular: "مليون", dual: "مليونان", plural: "ملايين" },
+    { divisor: 1_000, singular: "ألف", dual: "ألفان", plural: "آلاف" },
+  ];
+  let remainder = value;
+  const parts: string[] = [];
+  for (const group of groups) {
+    const count = Math.floor(remainder / group.divisor);
+    if (count) parts.push(scaledGroupToArabic(count, group.singular, group.dual, group.plural));
+    remainder %= group.divisor;
+  }
+  if (remainder) parts.push(underThousandToArabic(remainder));
+  return parts.join(" و");
+}
+
+export function amountInArabicWords(value: number, currency = "EGP"): string {
+  const currencies: Record<
+    string,
+    {
+      singular: string;
+      dual: string;
+      plural: string;
+      minor: string;
+      minorDual: string;
+      minorPlural: string;
+    }
+  > = {
+    EGP: {
+      singular: "جنيه",
+      dual: "جنيهان",
+      plural: "جنيهات",
+      minor: "قرش",
+      minorDual: "قرشان",
+      minorPlural: "قروش",
+    },
+    USD: {
+      singular: "دولار",
+      dual: "دولاران",
+      plural: "دولارات",
+      minor: "سنت",
+      minorDual: "سنتان",
+      minorPlural: "سنتات",
+    },
+    SAR: {
+      singular: "ريال",
+      dual: "ريالان",
+      plural: "ريالات",
+      minor: "هللة",
+      minorDual: "هللتان",
+      minorPlural: "هللات",
+    },
+    AED: {
+      singular: "درهم",
+      dual: "درهمان",
+      plural: "دراهم",
+      minor: "فلس",
+      minorDual: "فلسان",
+      minorPlural: "فلوس",
+    },
+  };
+  const unit = currencies[currency] ?? currencies["EGP"]!;
+  const cents = Math.round(Math.abs(Number.isFinite(value) ? value : 0) * 100);
+  const whole = Math.floor(cents / 100);
+  const fraction = cents % 100;
+  const wholeWords = quantityToArabic(whole, unit.singular, unit.dual, unit.plural);
+  const fractionWords = fraction
+    ? quantityToArabic(fraction, unit.minor, unit.minorDual, unit.minorPlural)
+    : "";
+  const amountWords = fractionWords ? `${wholeWords} و${fractionWords}` : wholeWords;
+  return `${value < 0 ? "سالب " : ""}${amountWords} فقط لا غير`;
+}
+
 export function qty(value: number): string {
   return (Number.isFinite(value) ? value : 0).toLocaleString("en-US", { maximumFractionDigits: 3 });
 }

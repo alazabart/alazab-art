@@ -4,6 +4,7 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import { COMPANY, PAYMENT_PROFILES, RULES, type PaymentProfileId } from "@/lib/azdocs/company";
 import {
   KIND_TITLE,
+  amountInArabicWords,
   docCode,
   money,
   paginate,
@@ -211,6 +212,9 @@ export function SalesDocPrint({ doc, paymentProfile }: Props) {
                       </ul>
                     </div>
                   </div>
+                  <p className="az-amount-words" dir="rtl">
+                    <b>المبلغ كتابة:</b> {amountInArabicWords(doc.finalTotal, doc.currency)}
+                  </p>
                   <div className="az-pay">
                     <dl>
                       <dt>Payments Account:</dt>

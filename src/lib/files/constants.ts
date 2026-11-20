@@ -122,7 +122,14 @@ export function isAllowedFile(name: string): boolean {
 /** Kinds the browser can show directly (others need download or a specialised viewer). */
 export function hasDirectPreview(name: string): boolean {
   const k = fileKind(name);
-  return k === "image" || k === "pdf" || k === "video" || k === "office" || k === "model3d";
+  const extension = fileExtension(name);
+  return (
+    k === "image" ||
+    k === "pdf" ||
+    k === "video" ||
+    k === "model3d" ||
+    (k === "cad" && (extension === "dxf" || extension === "ifc"))
+  );
 }
 
 /** Storage keys must be plain ASCII; the original name is kept in the database. */

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import DxfParser from "dxf-parser";
 import {
   fileKind,
   hasDirectPreview,
@@ -34,17 +35,67 @@ describe("Gallery accepts the plan's target formats", () => {
   });
 });
 
-describe("Upload does not mean in-browser preview", () => {
-  it("CAD/BIM files have no direct preview", () => {
-    for (const n of ["plan.dwg", "plan.dxf", "model.ifc", "model.rvt"]) {
+describe("DXF parser", () => {
+  it("reads common line and circle entities from an ASCII drawing", () => {
+    const source = [
+      "0",
+      "SECTION",
+      "2",
+      "ENTITIES",
+      "0",
+      "LINE",
+      "8",
+      "0",
+      "10",
+      "0",
+      "20",
+      "0",
+      "30",
+      "0",
+      "11",
+      "100",
+      "21",
+      "50",
+      "31",
+      "0",
+      "0",
+      "CIRCLE",
+      "8",
+      "0",
+      "10",
+      "25",
+      "20",
+      "10",
+      "30",
+      "0",
+      "40",
+      "5",
+      "0",
+      "ENDSEC",
+      "0",
+      "EOF",
+    ].join("\n");
+    const drawing = new DxfParser().parseSync(source);
+    expect(drawing?.entities.map((entity) => entity.type)).toEqual(["LINE", "CIRCLE"]);
+  });
+});
+
+describe("Direct file preview support", () => {
+  it("opens DXF and IFC files in browser viewers while preserving native-only formats for download", () => {
+    for (const n of ["plan.dwg", "model.rvt"]) {
       expect(fileKind(n)).toBe("cad");
       expect(hasDirectPreview(n)).toBe(false);
+    }
+    for (const n of ["plan.dxf", "model.ifc"]) {
+      expect(fileKind(n)).toBe("cad");
+      expect(hasDirectPreview(n)).toBe(true);
     }
   });
   it("PDF, images and GLB preview directly", () => {
     expect(hasDirectPreview("a.PDF")).toBe(true);
     expect(hasDirectPreview("a.jpg")).toBe(true);
     expect(hasDirectPreview("a.glb")).toBe(true);
+    expect(hasDirectPreview("a.docx")).toBe(false);
     expect(hasDirectPreview("a.stl")).toBe(false);
   });
 });

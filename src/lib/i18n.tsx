@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
 export type Lang = "ar" | "en";
 
@@ -173,5 +173,5 @@ export function useLang() {
 /** Inline bilingual text: tx("عربي", "English"). Used by the file gallery screens. */
 export function useTx() {
   const { lang } = useContext(LangContext);
-  return (arText: string, enText: string) => (lang === "ar" ? arText : enText);
+  return useCallback((arText: string, enText: string) => (lang === "ar" ? arText : enText), [lang]);
 }
