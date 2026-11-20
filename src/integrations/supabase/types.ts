@@ -138,52 +138,94 @@ export type Database = {
       }
       daftra_invoices: {
         Row: {
+          client_id: string | null
           client_name: string | null
           client_phone: string | null
+          created_at: string
           currency: string
           doc_number: string
+          due_date: string | null
           final_total: number | null
           id: string
           issue_date: string | null
           items_json: Json
           paid_amount: number | null
+          payment_status: string | null
           raw_data: Json
           status: string | null
           subtotal: number | null
+          synced_at: string
           tax_total: number | null
           updated_at: string
         }
         Insert: {
+          client_id?: string | null
           client_name?: string | null
           client_phone?: string | null
+          created_at?: string
           currency?: string
           doc_number: string
+          due_date?: string | null
           final_total?: number | null
           id: string
           issue_date?: string | null
           items_json?: Json
           paid_amount?: number | null
+          payment_status?: string | null
           raw_data?: Json
           status?: string | null
           subtotal?: number | null
+          synced_at?: string
           tax_total?: number | null
           updated_at?: string
         }
         Update: {
+          client_id?: string | null
           client_name?: string | null
           client_phone?: string | null
+          created_at?: string
           currency?: string
           doc_number?: string
+          due_date?: string | null
           final_total?: number | null
           id?: string
           issue_date?: string | null
           items_json?: Json
           paid_amount?: number | null
+          payment_status?: string | null
           raw_data?: Json
           status?: string | null
           subtotal?: number | null
+          synced_at?: string
           tax_total?: number | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      daftra_sync_logs: {
+        Row: {
+          created_at: string
+          error: string | null
+          failed: number
+          id: string
+          processed: number
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          failed?: number
+          id?: string
+          processed?: number
+          source: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          failed?: number
+          id?: string
+          processed?: number
+          source?: string
         }
         Relationships: []
       }
