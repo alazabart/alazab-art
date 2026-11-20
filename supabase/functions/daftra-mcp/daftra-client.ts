@@ -152,3 +152,47 @@ export async function callDaftra(op: Operation, args: Dict): Promise<ToolResult>
     return toolResult({ error: e instanceof Error ? e.message : String(e) }, true);
   }
 }
+
+/** Older modules name resources by their singular REST name; map them to Daftra api2 paths. */
+const LEGACY_RESOURCE: Record<string, string> = {
+  client: "clients",
+  invoice: "invoices",
+  product: "products",
+  payment: "invoice_payments",
+};
+
+/** Turns a legacy call path such as `client/12` or `journals.json` into a catalog-style `/clients/12{format}` path. */
+export function legacyPath(path: string): string {
+  const clean = path.replace(/^\/+/, "");
+  const [first, ...rest] = clean.split("/");
+  const mapped = LEGACY_RESOURCE[first];
+  if (mapped) {
+    const tail = rest.join("/").replace(/\.json$/, "");
+    return `/${mapped}${tail ? `/${tail}` : ""}{format}`;
+  }
+  return `/${clean}`;
+}
+
+/**
+ * Compatibility wrapper for the hand-written modules (modules/clients.ts, hr.ts, ...):
+ * same safety rules as `callDaftra` (tenant check, write switch, dry run, compact output).
+ */
+export function callDaftraApi(
+  method: string,
+  path: string,
+  body?: unknown,
+  query?: Record<string, unknown>,
+): Promise<ToolResult> {
+  const op: Operation = {
+    id: `legacy_${method.toLowerCase()}_${path}`,
+    m: method.toUpperCase(),
+    p: legacyPath(path),
+    s: "",
+    t: "legacy",
+    module: "legacy",
+    params: [],
+  };
+  const cleanQuery: Dict = {};
+  for (const [k, v] of Object.entries(query ?? {})) if (v !== undefined && v !== null && v !== "") cleanQuery[k] = v;
+  return callDaftra(op, { query: cleanQuery, body });
+}

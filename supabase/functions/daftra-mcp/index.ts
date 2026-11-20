@@ -7,6 +7,7 @@ import type { Dict, Operation, ToolResult } from "./types.ts";
 import { isObject, toolResult } from "./types.ts";
 import { executeRegistered, validateRegistry } from "./modules/registry.ts";
 import { expandSearchTerms, normalizeArabic } from "./arabic-aliases.ts";
+import { LEGACY_TOOLS } from "./modules/legacy-tools.ts";
 
 const OPERATIONS = catalog as Operation[];
 const COVERAGE = validateRegistry(OPERATIONS);
@@ -102,6 +103,14 @@ const TOOLS = [
   },
 ] as const;
 
+// Catalog tools first, then the hand-written shortcuts (daftra_list_clients, daftra_list_staff, ...).
+const ALL_TOOLS = [
+  ...TOOLS,
+  ...LEGACY_TOOLS.filter((tool) => !TOOLS.some((t) => t.name === tool.name)).map(
+    ({ name, description, inputSchema }) => ({ name, description, inputSchema }),
+  ),
+];
+
 async function invokeTool(name: string, args: Dict): Promise<ToolResult> {
   if (name === "daftra_list_categories") {
     const counts: Record<string, number> = {};
@@ -155,6 +164,15 @@ async function invokeTool(name: string, args: Dict): Promise<ToolResult> {
     }
   }
 
+  const legacy = LEGACY_TOOLS.find((tool) => tool.name === name);
+  if (legacy) {
+    try {
+      return await legacy.handler(args);
+    } catch (error) {
+      return toolResult({ error: error instanceof Error ? error.message : String(error) }, true);
+    }
+  }
+
   return toolResult(`Unknown tool: ${name}`, true);
 }
 
@@ -180,14 +198,14 @@ async function handle(message: unknown): Promise<unknown | null> {
     case "ping":
       return rpcResult(id, {});
     case "tools/list":
-      return rpcResult(id, { tools: TOOLS });
+      return rpcResult(id, { tools: ALL_TOOLS });
     case "tools/call": {
       if (!isObject(message.params) || typeof message.params.name !== "string")
         return rpcError(id, -32602, "Expected params.name");
       if (message.params.arguments !== undefined && !isObject(message.params.arguments))
         return rpcError(id, -32602, "Expected params.arguments to be an object");
       const name = message.params.name;
-      if (!TOOLS.some((tool) => tool.name === name)) return rpcError(id, -32602, `Unknown tool: ${name}`);
+      if (!ALL_TOOLS.some((tool) => tool.name === name)) return rpcError(id, -32602, `Unknown tool: ${name}`);
       return rpcResult(id, await invokeTool(name, isObject(message.params.arguments) ? message.params.arguments : {}));
     }
     default:
@@ -210,7 +228,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
       operations: OPERATIONS.length,
       registeredModules: COVERAGE.modules,
       registeredOperations: COVERAGE.operations,
-      tools: TOOLS.map((tool) => tool.name),
+      tools: ALL_TOOLS.map((tool) => tool.name),
     });
   }
   if (request.method !== "POST") return response({ error: "Method Not Allowed" }, 405);

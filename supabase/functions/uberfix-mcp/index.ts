@@ -241,7 +241,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
   if (request.method === "GET") {
     return response({
       name: "uberfix-mcp",
-      version,
+      version: VERSION,
       upstream: GATEWAY_URL,
       tools: TOOLS.map((tool) => tool.name),
       stages: STAGES,
