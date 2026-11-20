@@ -136,6 +136,57 @@ export type Database = {
           },
         ]
       }
+      daftra_invoices: {
+        Row: {
+          client_name: string | null
+          client_phone: string | null
+          currency: string
+          doc_number: string
+          final_total: number | null
+          id: string
+          issue_date: string | null
+          items_json: Json
+          paid_amount: number | null
+          raw_data: Json
+          status: string | null
+          subtotal: number | null
+          tax_total: number | null
+          updated_at: string
+        }
+        Insert: {
+          client_name?: string | null
+          client_phone?: string | null
+          currency?: string
+          doc_number: string
+          final_total?: number | null
+          id: string
+          issue_date?: string | null
+          items_json?: Json
+          paid_amount?: number | null
+          raw_data?: Json
+          status?: string | null
+          subtotal?: number | null
+          tax_total?: number | null
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string | null
+          client_phone?: string | null
+          currency?: string
+          doc_number?: string
+          final_total?: number | null
+          id?: string
+          issue_date?: string | null
+          items_json?: Json
+          paid_amount?: number | null
+          raw_data?: Json
+          status?: string | null
+          subtotal?: number | null
+          tax_total?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       document_versions: {
         Row: {
           checksum: string | null
