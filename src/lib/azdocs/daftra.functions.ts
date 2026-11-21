@@ -149,3 +149,52 @@ export const daftraStatus = createServerFn({ method: "POST" })
       return failure(e);
     }
   });
+
+export type SyncStatus = {
+  ok: true;
+  lastRunAt: string | null;
+  lastSource: string | null;
+  lastError: string | null;
+  storedCount: number;
+};
+
+/** Staff-only: last sync run and how many documents are stored. */
+export const daftraSyncStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<SyncStatus | DaftraFailure> => {
+    if (!(await ensureStaff(context)))
+      return { ok: false, code: "forbidden", message: "Staff only." };
+    const [{ data: log }, { count }] = await Promise.all([
+      context.supabase
+        .from("daftra_sync_logs")
+        .select("created_at,source,error")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      context.supabase.from("daftra_invoices").select("id", { count: "exact", head: true }),
+    ]);
+    return {
+      ok: true,
+      lastRunAt: log?.created_at ?? null,
+      lastSource: log?.source ?? null,
+      lastError: log?.error ?? null,
+      storedCount: count ?? 0,
+    };
+  });
+
+/** Staff-only: pull the newest invoices and quotations from Daftra into the database now. */
+export const syncDaftraNow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(
+    async ({ context }): Promise<{ ok: true; processed: number; failed: number } | DaftraFailure> => {
+      if (!(await ensureStaff(context)))
+        return { ok: false, code: "forbidden", message: "Staff only." };
+      try {
+        const { syncRecent } = await import("./sync.server");
+        const r = await syncRecent("manual", 3);
+        return { ok: true, ...r };
+      } catch (e) {
+        return failure(e);
+      }
+    },
+  );

@@ -26,10 +26,10 @@ type Tab = (typeof TABS)[number];
 
 export default function Index() {
   const { t, lang, setLang, dir } = useLang();
-  // Saved directory lives in this browser; read it after mount so server and first render match.
+  // Shared directory from the database; loaded after mount so server and first render match.
   const [catalog, setCatalog] = useState<ServiceItem[]>(STARTER_CATALOG);
   useEffect(() => {
-    setCatalog(loadCatalog());
+    void loadCatalog().then(setCatalog);
   }, []);
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<Tab>("all");

@@ -1,8 +1,8 @@
 // src/routes/_authenticated/azdocs.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { listSalesDocs, getSalesDoc } from "@/lib/azdocs/daftra.functions";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { listSalesDocs, getSalesDoc, daftraSyncStatus, syncDaftraNow } from "@/lib/azdocs/daftra.functions";
 import { SalesDocPrint } from "@/components/azdocs/SalesDocPrint";
 import { docCode, formatCurrency } from "@/lib/azdocs/model";
 import { Button } from "@/components/ui/button";
@@ -16,9 +16,21 @@ import {
   Loader2,
   ChevronRight,
   ChevronLeft,
+  RefreshCw,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/azdocs")({
+  head: () => ({
+    meta: [
+      { title: "الفواتير وعروض الأسعار | Alazab Cloud" },
+      { name: "description", content: "فواتير وعروض أسعار دفترة بقالب العزب الرسمي للطباعة A4." },
+      { name: "robots", content: "noindex" },
+      { property: "og:title", content: "الفواتير وعروض الأسعار | Alazab Cloud" },
+      { property: "og:description", content: "مستندات المبيعات من دفترة بقالب الطباعة الرسمي." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: AzDocsPage,
 });
 
@@ -96,6 +108,7 @@ function AzDocsPage() {
             ابحث في مستندات المبيعات وعاين قالب الطباعة الرسمي بحجم A4.
           </p>
         </div>
+        <SyncPanel />
       </header>
 
       <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -131,7 +144,7 @@ function AzDocsPage() {
       </div>
 
       {listQuery.isLoading ? (
-        <div className="flex items-center justify-center p-12 text-slate-400 gap-2">
+        <div className="flex items-center justify-center p-12 text-muted-foreground gap-2">
           <Loader2 className="h-5 w-5 animate-spin" /> جاري سحب المستندات من دفترة...
         </div>
       ) : !listQuery.data?.ok ? (
@@ -169,12 +182,12 @@ function AzDocsPage() {
               </thead>
               <tbody>
                 {listQuery.data.rows.map((row) => (
-                  <tr key={row.id} className="border-b hover:bg-slate-50/50">
-                    <td className="p-3 font-mono font-bold text-[#030957]">
+                  <tr key={row.id} className="border-b hover:bg-secondary/40">
+                    <td className="p-3 font-mono font-bold text-primary">
                       {docCode(kind, row.date, row.number)}
                     </td>
                     <td className="p-3">{row.clientName}</td>
-                    <td className="p-3 text-slate-500">{row.date}</td>
+                    <td className="p-3 text-muted-foreground">{row.date}</td>
                     <td className="p-3 font-mono font-semibold">
                       {formatCurrency(row.total, row.currency, "ar-EG")}
                     </td>
@@ -183,7 +196,7 @@ function AzDocsPage() {
                         size="sm"
                         variant="outline"
                         onClick={() => setSelectedId(row.id)}
-                        className="gap-1 text-[#030957]"
+                        className="gap-1 text-primary"
                       >
                         <Printer className="h-3.5 w-3.5" /> معاينة وطباعة
                       </Button>
@@ -221,6 +234,41 @@ function AzDocsPage() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function SyncPanel() {
+  const qc = useQueryClient();
+  const status = useQuery({ queryKey: ["daftra-sync-status"], queryFn: () => daftraSyncStatus() });
+  const sync = useMutation({
+    mutationFn: () => syncDaftraNow(),
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: ["daftra-sync-status"] });
+      void qc.invalidateQueries({ queryKey: ["azdocs"] });
+    },
+  });
+  const st = status.data?.ok ? status.data : null;
+  return (
+    <div className="flex flex-col items-start gap-2 rounded-xl border border-border bg-card p-3 text-xs text-muted-foreground sm:items-end">
+      <div>
+        المحفوظ في النظام: <b className="text-foreground">{st?.storedCount ?? "—"}</b> مستند
+        {st?.lastRunAt && (
+          <> · آخر مزامنة: {new Date(st.lastRunAt).toLocaleString("ar-EG")}</>
+        )}
+      </div>
+      {st?.lastError && <div className="text-destructive">آخر خطأ: {st.lastError}</div>}
+      {sync.data && (
+        <div role="status">
+          {sync.data.ok
+            ? `تمت مزامنة ${sync.data.processed} مستند${sync.data.failed ? ` (تعذر ${sync.data.failed})` : ""}`
+            : sync.data.message}
+        </div>
+      )}
+      <Button size="sm" variant="outline" className="gap-2" disabled={sync.isPending} onClick={() => sync.mutate()}>
+        <RefreshCw className={`size-4 ${sync.isPending ? "animate-spin" : ""}`} aria-hidden="true" />
+        {sync.isPending ? "جارٍ المزامنة..." : "مزامنة مع دفترة الآن"}
+      </Button>
     </div>
   );
 }

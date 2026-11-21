@@ -24,6 +24,7 @@ import { Route as AuthenticatedFilesArchiveRouteImport } from './routes/_authent
 import { Route as AuthenticatedFilesGalleryRouteImport } from './routes/_authenticated/files.gallery'
 import { Route as AuthenticatedFilesSharesRouteImport } from './routes/_authenticated/files.shares'
 import { Route as AuthenticatedFilesUsersRouteImport } from './routes/_authenticated/files.users'
+import { Route as ApiPublicDaftraWebhookRouteImport } from './routes/api/public/daftra-webhook'
 import { Route as AuthenticatedFilesDocumentsDocumentIdRouteImport } from './routes/_authenticated/files.documents.$documentId'
 import { Route as AuthenticatedFilesProjectsIndexRouteImport } from './routes/_authenticated/files.projects.index'
 import { Route as AuthenticatedFilesProjectsProjectIdRouteImport } from './routes/_authenticated/files.projects.$projectId'
@@ -106,6 +107,11 @@ const AuthenticatedFilesUsersRoute = AuthenticatedFilesUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AuthenticatedFilesRoute,
 } as any)
+const ApiPublicDaftraWebhookRoute = ApiPublicDaftraWebhookRouteImport.update({
+  id: '/api/public/daftra-webhook',
+  path: '/api/public/daftra-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedFilesDocumentsDocumentIdRoute =
   AuthenticatedFilesDocumentsDocumentIdRouteImport.update({
     id: '/documents/$documentId',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/files/gallery': typeof AuthenticatedFilesGalleryRoute
   '/files/shares': typeof AuthenticatedFilesSharesRoute
   '/files/users': typeof AuthenticatedFilesUsersRoute
+  '/api/public/daftra-webhook': typeof ApiPublicDaftraWebhookRoute
   '/files/': typeof AuthenticatedFilesIndexRoute
   '/files/documents/$documentId': typeof AuthenticatedFilesDocumentsDocumentIdRoute
   '/files/projects/$projectId': typeof AuthenticatedFilesProjectsProjectIdRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByTo {
   '/files/gallery': typeof AuthenticatedFilesGalleryRoute
   '/files/shares': typeof AuthenticatedFilesSharesRoute
   '/files/users': typeof AuthenticatedFilesUsersRoute
+  '/api/public/daftra-webhook': typeof ApiPublicDaftraWebhookRoute
   '/files': typeof AuthenticatedFilesIndexRoute
   '/files/documents/$documentId': typeof AuthenticatedFilesDocumentsDocumentIdRoute
   '/files/projects/$projectId': typeof AuthenticatedFilesProjectsProjectIdRoute
@@ -178,6 +186,7 @@ export interface FileRoutesById {
   '/_authenticated/files/gallery': typeof AuthenticatedFilesGalleryRoute
   '/_authenticated/files/shares': typeof AuthenticatedFilesSharesRoute
   '/_authenticated/files/users': typeof AuthenticatedFilesUsersRoute
+  '/api/public/daftra-webhook': typeof ApiPublicDaftraWebhookRoute
   '/_authenticated/files/': typeof AuthenticatedFilesIndexRoute
   '/_authenticated/files/documents/$documentId': typeof AuthenticatedFilesDocumentsDocumentIdRoute
   '/_authenticated/files/projects/$projectId': typeof AuthenticatedFilesProjectsProjectIdRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/files/gallery'
     | '/files/shares'
     | '/files/users'
+    | '/api/public/daftra-webhook'
     | '/files/'
     | '/files/documents/$documentId'
     | '/files/projects/$projectId'
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/files/gallery'
     | '/files/shares'
     | '/files/users'
+    | '/api/public/daftra-webhook'
     | '/files'
     | '/files/documents/$documentId'
     | '/files/projects/$projectId'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/_authenticated/files/gallery'
     | '/_authenticated/files/shares'
     | '/_authenticated/files/users'
+    | '/api/public/daftra-webhook'
     | '/_authenticated/files/'
     | '/_authenticated/files/documents/$documentId'
     | '/_authenticated/files/projects/$projectId'
@@ -251,6 +263,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   StorageRoute: typeof StorageRoute
   ShareTokenRoute: typeof ShareTokenRoute
+  ApiPublicDaftraWebhookRoute: typeof ApiPublicDaftraWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -360,6 +373,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFilesUsersRouteImport
       parentRoute: typeof AuthenticatedFilesRoute
     }
+    '/api/public/daftra-webhook': {
+      id: '/api/public/daftra-webhook'
+      path: '/api/public/daftra-webhook'
+      fullPath: '/api/public/daftra-webhook'
+      preLoaderRoute: typeof ApiPublicDaftraWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/files/documents/$documentId': {
       id: '/_authenticated/files/documents/$documentId'
       path: '/documents/$documentId'
@@ -434,6 +454,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   StorageRoute: StorageRoute,
   ShareTokenRoute: ShareTokenRoute,
+  ApiPublicDaftraWebhookRoute: ApiPublicDaftraWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
