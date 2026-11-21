@@ -244,6 +244,7 @@ export type Database = {
           id: string
           issue_date: string | null
           items_json: Json
+          kind: string
           paid_amount: number | null
           payment_status: string | null
           raw_data: Json
@@ -265,6 +266,7 @@ export type Database = {
           id: string
           issue_date?: string | null
           items_json?: Json
+          kind?: string
           paid_amount?: number | null
           payment_status?: string | null
           raw_data?: Json
@@ -286,6 +288,7 @@ export type Database = {
           id?: string
           issue_date?: string | null
           items_json?: Json
+          kind?: string
           paid_amount?: number | null
           payment_status?: string | null
           raw_data?: Json
@@ -695,6 +698,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      portal_services: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string
+          description_en: string
+          icon: string
+          id: string
+          name: string
+          name_en: string
+          sort_order: number
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          description_en?: string
+          icon?: string
+          id?: string
+          name: string
+          name_en?: string
+          sort_order?: number
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          description_en?: string
+          icon?: string
+          id?: string
+          name?: string
+          name_en?: string
+          sort_order?: number
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
