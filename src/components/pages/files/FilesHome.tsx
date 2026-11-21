@@ -12,6 +12,7 @@ import {
   FileCheck2,
   FileText,
   Files,
+  Download,
   FolderKanban,
   Package,
   Plus,
@@ -23,6 +24,7 @@ import { formatDate, labelOf, PROJECT_STATUSES } from "@/lib/files/constants";
 import DocumentsView from "@/components/files/DocumentsView";
 import { EmptyState, StatusBadge } from "@/components/files/ui";
 import { Button } from "@/components/ui/button";
+import { createProjectReportCsv, projectReportFilename } from "@/lib/files/report";
 
 const CATEGORY_CARDS = [
   { id: "shop_drawing", en: "Shop drawings", ar: "المخططات التنفيذية", icon: DraftingCompass },
@@ -46,6 +48,20 @@ export default function FilesHome() {
   const name = me?.profile?.full_name?.split(" ")[0] ?? "";
   const activeProjects = projects.filter((project) => project.status === "active");
   const latestProjects = projects.slice(0, 3);
+  const exportProjectReport = () => {
+    const blob = new Blob([createProjectReportCsv(projects, approvals, lang)], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = projectReportFilename();
+    link.hidden = true;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  };
   const stats = [
     {
       label: tx("المشروعات النشطة", "Active projects"),
@@ -148,6 +164,31 @@ export default function FilesHome() {
           </Link>
         ))}
       </section>
+
+      {me?.isStaff && (
+        <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border/80 bg-card/60 p-4 sm:p-5">
+          <div className="min-w-0">
+            <h2 className="font-semibold">
+              {tx("تقرير متابعة المشروعات", "Project activity report")}
+            </h2>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              {tx(
+                "نزّل ملخصًا بالمشروعات والملفات والاعتمادات المعلقة المتاحة لحسابك.",
+                "Download a summary of projects, files, and pending approvals available to your account.",
+              )}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={exportProjectReport}
+            disabled={projects.length === 0}
+          >
+            <Download data-icon="inline-start" aria-hidden="true" />
+            {tx("تنزيل CSV", "Download CSV")}
+          </Button>
+        </section>
+      )}
 
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0 space-y-8">
